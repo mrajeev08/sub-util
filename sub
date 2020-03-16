@@ -2,7 +2,7 @@
 suppressPackageStartupMessages(library("argparse"))
 
 # create parser object
-parser <- ArgumentParser(prog="sub-util", description="Utility for submitting jobs (in this case an R script) to remote cluster. This uses an rsync to sync from the local directory to the remote directory. You need to include this script in your directory with 'rsync' in it's name. You also need to specify the output you want to pull down (sync_from) and the location (sync_to) in your Rscript. An example is included in this directory. You also need a folder called bash where all the bash & slurm scripts will be stored.", formatter_class="argparse.ArgumentDefaultsHelpFormatter")
+parser <- ArgumentParser(prog="sub", description="Utility for submitting jobs (in this case an R script) to remote cluster. This uses an rsync to sync from the local directory to the remote directory. You need to include this script in your directory with 'rsync' in it's name. You also need to specify the output you want to pull down (sync_from) and the location (sync_to) in your Rscript. An example is included in this directory. You also need a folder called bash where all the bash & slurm scripts will be stored.", formatter_class="argparse.ArgumentDefaultsHelpFormatter")
 
 # specify our desired options
 # by default ArgumentParser will add a help option

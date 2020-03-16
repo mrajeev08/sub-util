@@ -1,9 +1,7 @@
-README
+Sub-util
 ================
-Malavika Rajeev
-3/16/2020
 
-## Sub-util
+## Usage
 
 This is a utility for submitting jobs via slurm to remote and pulling
 down the job when it’s finished.
@@ -52,9 +50,23 @@ First, clone & edit so that your email is passed through.
 Then add to .bashrc and also add bit that sources it when you start the
 terminal (for MacOS)
 
+For the example:
+
+run this
+
+you should see something like this
+
+CTRL + Esc if you want to get out of it (in which case it will pull down
+then)
+
 ## References
 
 Adapted from princeton computing folks here. Should be easily adaptable
 to whatever type of commands/scripts you want to run.
 
 Relies on argparser library in R.
+
+## Extensions
+
+[ ] Add option to use cron instead of rsync for longer jobs
+[ ] More flexible abt user & type of script being run
