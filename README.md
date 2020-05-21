@@ -52,7 +52,7 @@ and the script path (see -sp argument) (default: True)
 Add to .bashrc and also add bit that sources it when you start the
 terminal (for MacOS)
 
-You'll also need to vpn in to della so that you don't have to duo each time (instructions here) and set up a ssh key so you don't have to log in. 
+You'll also need to vpn in to della so that you don't have to duo each time (instructions here) and set up a ssh key?
 
 For the example:
 
@@ -74,3 +74,4 @@ Relies on argparser library in R.
 
 [ ]  Add option to use cron instead of rsync for longer jobs (instead of checking schedule a cron task to check every N hours or after X hours)
 [ ]  Notification when complete (beepme?)
+
