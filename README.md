@@ -3,7 +3,7 @@ Sub
 
 ## Usage
 
-This is a utility for submitting jobs via slurm to remote and pulling
+This is a bash command line tool for submitting jobs via slurm to remote and pulling
 down the results when it’s finished.
 
 For help and usage info, enter `sub -h` on the command line:
@@ -49,29 +49,46 @@ and the script path (see -sp argument) (default: True)
 ```
 ## Setting-up
 
-Add to .bashrc and also add bit that sources it when you start the
-terminal (for MacOS)
+For MacOS & terminal:
 
-You'll also need to vpn in to della so that you don't have to duo each time (instructions here) and set up a ssh key?
+1. Add the following line to your `.bash_profile` file.
+```
+if [ -r ~/.bashrc ]; then
+   source ~/.bashrc
+fi
+```
+2. Add the following line to your `.bashrc` file.
+```
+export PATH=$PATH:{path/to/subutil}
+```
 
-For the example:
+Also you may need to make the sub file executable first, run this line in terminal from the directory the file is in: ```chmod u+x sub```
 
-run this
+You will also need to VPN in to della (even if you are on a campus connection) so that you don't have to duo each time and you will need to [set up an sshkey](https://github.com/PrincetonUniversity/removing_tedium/tree/master/02_passwordless_logins).
 
-you should see something like this
+## Example
 
-CTRL + Esc if you want to get out of it (in which case it will pull down
-then)
+In the [example](example/) folder, you will find a test case you can run.
 
-## References
+First, download or clone the directory to your local computer. 
+```
+git clone https://github.com/mrajeev08/subutil.git
+```
 
-Adapted from princeton computing folks here. Should be easily adaptable
-to whatever type of commands/scripts you want to run.
+Change the rsync paths & username as to yours and then open terminal and try:
+```
+cd example
+sub -sn -t 1 -n 1 -sp "test.R" -jn "test" -wt 20s
+```
+## Hat tip 
 
-Relies on argparser library in R.
+Thanks to this really useful worksop [on removing tedium from your research workflow](https://github.com/PrincetonUniversity/removing_tedium) and @jdh4 for the inspiration and bash help session, and also to [shellcheck](https://www.shellcheck.net), a very useful tool for checking your scripts.
+
+Dependencies:
+- R (version 3.6.0 or higher)
+- [argparser](https://github.com/trevorld/r-argparse) package which requires python 
 
 ## To Do
-
-[ ]  Add option to use cron instead of rsync for longer jobs (instead of checking schedule a cron task to check every N hours or after X hours)
-[ ]  Notification when complete (beepme?)
-
+- [ ] Longer jobs?
+- [ ] Array jobs?
+- [ ] Switch to [docopt](https://github.com/docopt/docopt.R) for fewer dependencies & cleaner code?
