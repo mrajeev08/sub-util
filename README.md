@@ -1,10 +1,10 @@
-Sub-util
+Sub 
 ================
 
 ## Usage
 
 This is a utility for submitting jobs via slurm to remote and pulling
-down the job when it’s finished.
+down the results when it’s finished.
 
 For help and usage info, enter `sub -h` on the command line:
 ```

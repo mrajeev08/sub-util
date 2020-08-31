@@ -15,7 +15,7 @@ target <- paste0(usr, "@", cluster)
 to_email <- paste0(usr, "@princeton.edu")
 
 # create parser object
-parser <- ArgumentParser(prog="sub", description="Utility for submitting jobs (in this case an R script) to remote cluster. This uses an rsync to sync from the local directory to the remote directory. You will need to make a directory `bash` where all the bash & slurm scripts will be stored. In this directory, create an Rsync script with 'rsync' in it's name, and that has two commented lines specifying your Princeton email/username and the target cluster (see example/bash/rsync.sh). In each Rscript you want to run, you can either pass the directories you want to sync from (syncfrom) from and sync to (syncto) as command line arguments or you can include them in each Rscript. An example is included in this directory.", formatter_class="argparse.ArgumentDefaultsHelpFormatter")
+parser <- ArgumentParser(prog="sub", description="Utility for submitting jobs (in this case an R script) to remote cluster. This uses an rsync to sync from the local directory to the remote directory. You will need to make a directory `bash` where all the bash & slurm scripts will be stored. In this directory, create an Rsync script with 'rsync' in it's name, and that has two commented lines specifying your Princeton email/username and the target cluster (see example/bash/rsync.sh). In each Rscript you want to run, you can either pass the directories you want to sync from (syncfrom) from and sync to (syncto) as command line arguments or you can include them in the script itself. An example is included in this directory.")
 
 # specify our desired options
 # by default ArgumentParser will add a help option
@@ -48,6 +48,8 @@ parser$add_argument("-sf", "--syncfrom", help = "Remote directory to pull FROM, 
 parser$add_argument("--runsync", action="store_true", default=TRUE, help="Rsyncs up, submits the job, and then pulls down results. To only pull down results pass -no or --norun and the script path (see -sp argument)")
 parser$add_argument("-no", "--norun", action="store_false", dest="runsync")
 
+parser$add_argument("-md", "--modules", help = "Other modules to load in slurm script, should be passed as string of module names separated by a space and in quotes", dest = "mods", default = "", metavar = "")
+
 # get command line options, if help option encountered print help and exit,
 # otherwise if options not found on command line then set defaults,
 args <- parser$parse_args()
@@ -58,6 +60,7 @@ memCPU <- trimws(toString(args$memCPU))
 jobName <- noquote(trimws(toString(args$jobName)))
 scriptPath <- trimws(toString(args$scriptPath))
 wait <- trimws(toString(args$wait))
+mods <- toString(args$mods)
 
 if(is.null(args$syncto)) {
   syncto <- trimws(toString(args$syncto))
@@ -98,6 +101,10 @@ if( !args$runsync ) {
   cat(paste("#SBATCH --mail-user=", to_email, "         # email\n", sep=""))
   }
   cat("\n")
+  
+  if(args$mods != "") {
+      cat(paste("module load", mods, "\n"))
+  }
   
   if ( args$multinode ) {
       cat("export OMPI_MCA_btl='tcp,self,sm'\n")

@@ -7,4 +7,4 @@
 ## -z compresses data before transfer and decompresses after transfer
 ## -t pass the timestamp when syncing
 
-rsync -rLvzt --update --exclude '*.git' --exclude '.Rproj*' ~/Documents/Projects/example mrajeev@della.princeton.edu:~/
+rsync -rLvzt --update --exclude '*.git' --exclude '.Rproj*' ~/Documents/Projects/subutil/example mrajeev@della.princeton.edu:~/
