@@ -9,7 +9,7 @@ down the results when it’s finished.
 For help and usage info, enter `sub -h` on the command line:
 ```
 usage: sub [-h] [--noGPU] [-g] [-mn] [-sn] [-t] [-n] [-mem] [-sp] [-jn] [-wt]
-[-@] [-n@] [-st] [-sf] [--runsync] [-no]
+           [-@] [-n@] [-st] [-sf] [--runsync] [-no] [-md]
 
 Utility for submitting jobs (in this case an R script) to remote cluster. This
 uses an rsync to sync from the local directory to the remote directory. You
@@ -19,34 +19,36 @@ name, and that has two commented lines specifying your Princeton
 email/username and the target cluster (see example/bash/rsync.sh). In each
 Rscript you want to run, you can either pass the directories you want to sync
 from (syncfrom) from and sync to (syncto) as command line arguments or you can
-include them in each Rscript. An example is included in this directory.
+include them in the script itself. An example is included in this directory.
 
 optional arguments:
--h, --help           show this help message and exit
---noGPU              Do not write GPU line, pass -g or --gpu to write the
-GPU line (default: True)
--g, --gpu
--mn, --multinode     Do not write the node line (multinode jobs with rMPI)
-(default: True)
--sn, --single        Write the node line for running job on single node
-(default: True)
--t , --time          Number of hours to run (default: 24)
--n , --ntasks        Number of tasks across all nodes (default: 1)
--mem , --memCPU      Megabyte of memory per CPU (default: 4000)
--sp , --scriptPath   Name of R script (default: myscript.R)
--jn , --jobName      Name of job/slurm script (default: myjob)
--wt , --wait         time interval to check if job complete (default: 10m)
--@, --email          whether to email or not (default: True)
--n@, --noemail       don't email (default: True)
--st , --syncto       Directory to pull TO, if NULL will look in Rscript
-passed for syncto (default: NULL)
--sf , --syncfrom     Remote directory to pull FROM, if NULL will look in
-Rscript passed for syncfrom (default: NULL)
---runsync            Rsyncs up, submits the job, and then pulls down
-results. To only pull down results pass -no or --norun
-and the script path (see -sp argument) (default: True)
--no, --norun
+  -h, --help           show this help message and exit
+  --noGPU              Do not write GPU line, pass -g or --gpu to write the
+                       GPU line
+  -g, --gpu
+  -mn, --multinode     Do not write the node line (multinode jobs with rMPI)
+  -sn, --single        Write the node line for running job on single node
+  -t , --time          Number of hours to run
+  -n , --ntasks        Number of tasks across all nodes
+  -mem , --memCPU      Megabyte of memory per CPU
+  -sp , --scriptPath   Name of R script
+  -jn , --jobName      Name of job/slurm script
+  -wt , --wait         time interval to check if job complete
+  -@, --email          whether to email or not
+  -n@, --noemail       don't email
+  -st , --syncto       Directory to pull TO, if NULL will look in Rscript
+                       passed for syncto
+  -sf , --syncfrom     Remote directory to pull FROM, if NULL will look in
+                       Rscript passed for syncfrom
+  --runsync            Rsyncs up, submits the job, and then pulls down
+                       results. To only pull down results pass -no or --norun
+                       and the script path (see -sp argument)
+  -no, --norun
+  -md , --modules      Other modules to load in slurm script, should be passed
+                       as string of module names separated by a space and in
+                       quotes
 ```
+
 ## Setting-up
 
 For MacOS & terminal:
