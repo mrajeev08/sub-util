@@ -80,8 +80,11 @@ git clone https://github.com/mrajeev08/subutil.git
 Change the rsync paths & username as to yours and then open terminal and try:
 ```
 cd example
-sub -sn -t 1 -n 1 -sp "test.R" -jn "test" -wt 20s
+sub -sn -t 1 -n 1 -sp "example/test.R" -jn "test" -wt 20s
 ```
+
+Note that in the example, I use the R package `here` to manage the nested directories. 
+
 ## Hat tip 
 
 Thanks to this really useful worksop [on removing tedium from your research workflow](https://github.com/PrincetonUniversity/removing_tedium) and @jdh4 for the inspiration and bash help session, and also to [shellcheck](https://www.shellcheck.net), a very useful tool for checking your scripts.
