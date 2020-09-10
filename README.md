@@ -83,7 +83,7 @@ cd example
 sub -sn -t 1 -n 1 -sp "example/test.R" -jn "test" -wt 20s
 ```
 
-Note that in the example, I use the R package `here` to manage the nested directory paths, although its not super necessary. 
+I use the R package `here` to manage the nested directory paths, although its not super necessary.  
 
 ## Hat tip 
 
