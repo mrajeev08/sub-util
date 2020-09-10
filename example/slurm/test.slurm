@@ -9,4 +9,4 @@
 #SBATCH --mail-type=end	        # send email when job ends
 #SBATCH --mail-user=mrajeev@princeton.edu         # email
 
-Rscript test.R
+Rscript example/test.R

@@ -13,13 +13,13 @@ usage: sub [-h] [--noGPU] [-g] [-mn] [-sn] [-t] [-n] [-mem] [-sp] [-jn] [-wt]
 
 Utility for submitting jobs (in this case an R script) to remote cluster. This
 uses an rsync to sync from the local directory to the remote directory. You
-will need to make a directory \`bash\` where all the bash & slurm scripts will
-be stored. In this directory, create an Rsync script with 'rsync' in it's
-name, and that has two commented lines specifying your Princeton
-email/username and the target cluster (see example/bash/rsync.sh). In each
-Rscript you want to run, you can either pass the directories you want to sync
-from (syncfrom) from and sync to (syncto) as command line arguments or you can
-include them in the script itself. An example is included in this directory.
+will need to create an Rsync script with 'subrsync' in it's name that has
+three commented lines of the format: ## user:={username} (specifies username);
+## cluster:={cluster} (specifies cluster); and ## dirput:={dir} (specifies
+where to put all your shell & slurm scripts). In each Rscript you want to run,
+you can either pass the directories you want to sync from (syncfrom) from and
+sync to (syncto) as command line arguments or you can include them in the
+script itself. An example is included in this directory.
 
 optional arguments:
   -h, --help           show this help message and exit

@@ -6,16 +6,17 @@ dir <- unlist(strsplit(getwd(), "/"))
 dir <- dir[length(dir)]
 
 # find rsync script and use it to push up to remote
-rsync <- grep("rsync", list.files("bash"), value = TRUE)
+rsync <- grep("subrsync", list.files(recursive = TRUE), value = TRUE)
 
 # get user name & cluster from rsync
-usr <- unlist(strsplit(grep("user:=", readLines(paste0("bash/", rsync)), value = TRUE), ":="))[2]
-cluster <- unlist(strsplit(grep("cluster:=", readLines(paste0("bash/", rsync)), value = TRUE), ":="))[2]
+usr <- unlist(strsplit(grep("user:=", readLines(rsync), value = TRUE), ":="))[2]
+cluster <- unlist(strsplit(grep("cluster:=", readLines(rsync), value = TRUE), ":="))[2]
+dirput <- unlist(strsplit(grep("dirput:=", readLines(rsync), value = TRUE), ":="))[2]
 target <- paste0(usr, "@", cluster)
 to_email <- paste0(usr, "@princeton.edu")
 
 # create parser object
-parser <- ArgumentParser(prog="sub", description="Utility for submitting jobs (in this case an R script) to remote cluster. This uses an rsync to sync from the local directory to the remote directory. You will need to make a directory `bash` where all the bash & slurm scripts will be stored. In this directory, create an Rsync script with 'rsync' in it's name, and that has two commented lines specifying your Princeton email/username and the target cluster (see example/bash/rsync.sh). In each Rscript you want to run, you can either pass the directories you want to sync from (syncfrom) from and sync to (syncto) as command line arguments or you can include them in the script itself. An example is included in this directory.")
+parser <- ArgumentParser(prog="sub", description="Utility for submitting jobs (in this case an R script) to remote cluster. This uses an rsync to sync from the local directory to the remote directory. You will need to create an Rsync script with 'subrsync' in it's name that has three commented lines of the format: ## user:={username} (specifies username); ## cluster:={cluster} (specifies cluster); and ## dirput:={dir} (specifies where to put all your shell & slurm scripts). In each Rscript you want to run, you can either pass the directories you want to sync from (syncfrom) from and sync to (syncto) as command line arguments or you can include them in the script itself. An example is included in this directory.")
 
 # specify our desired options
 # by default ArgumentParser will add a help option
@@ -65,7 +66,7 @@ mods <- toString(args$mods)
 if(is.null(args$syncto)) {
   syncto <- trimws(toString(args$syncto))
 } else {
-  syncto <- system2("grep", args = paste("syncto ", scriptPath, " | cut -f 2 -d -", sep = ""),
+  syncto <- system2("grep", args = paste0("syncto ", scriptPath, " | cut -f 2 -d -"),
                         stdout = TRUE)
   syncto <- unlist(strsplit(syncto, "\""))[2]
   print(paste("will pull to: ", syncto))
@@ -74,17 +75,17 @@ if(is.null(args$syncto)) {
 if(is.null(args$syncfrom)) {
   syncfrom <- trimws(toString(args$syncfrom))
 } else {
-  syncfrom <- system2("grep", args = paste("syncfrom ", scriptPath, " | cut -f 2 -d -", sep = ""),
+  syncfrom <- system2("grep", args = paste0("syncfrom ", scriptPath, " | cut -f 2 -d -"),
                       stdout = TRUE)
   syncfrom <- unlist(strsplit(syncfrom, "\""))[2]
   print(paste("will pull from: ", syncfrom))
 }
   
 if( !args$runsync ) {
-  system2("rsync", paste("-rLvzt", syncfrom, syncto, sep = " "))
+  system2("rsync", paste("-rLvzt", syncfrom, syncto))
 } else {
   # parse from Rscript
-  sink(paste("bash/", jobName, ".slurm", sep = ""))
+  sink(paste0(dirput, "/", jobName, ".slurm"))
   cat("#!/bin/bash\n")
   cat(paste("#SBATCH --job-name=", jobName,"	 # create a short name for your job\n", sep=""))
   
@@ -109,17 +110,17 @@ if( !args$runsync ) {
   if ( args$multinode ) {
       cat("export OMPI_MCA_btl='tcp,self,sm'\n")
       cat("module load openmpi/gcc/2.0.2\n")
-      cat(paste("srun Rscript ", scriptPath, "\n", sep = ""))
+      cat(paste0("srun Rscript ", scriptPath, "\n"))
   } else {
-      cat(paste("Rscript ", scriptPath, "\n", sep = ""))
+      cat(paste0("Rscript ", scriptPath, "\n"))
   }
   sink()
   
-  sink(paste("bash/", jobName, ".sh", sep = ""))
+  sink(paste0(dirput, "/", jobName, ".sh"))
   cat("#!/bin/bash\n")
-  cat(paste("ssh -T ", target, " <<HERE\n", sep = ""))
+  cat(paste0("ssh -T ", target, " <<HERE\n"))
   cat(paste("    cd ", dir, " # change to repo\n"))
-  cat(paste("    jid=\\$(sbatch bash/", jobName, ".slurm | cut -c 21-)\n", sep = ""))
+  cat(paste0("    jid=\\$(sbatch ", dirput, "/",jobName, ".slurm | cut -c 21-)\n"))
   cat("    echo \"Here's the job id: \\$jid\"\n")
   cat("    jstat=\\$(sacct -j \"\\$jid\" -u mrajeev | head -n 3)\n")
   cat("    echo \"Here's the job stat: \\$jstat\"\n")
@@ -128,21 +129,21 @@ if( !args$runsync ) {
   cat("        echo waiting   # updating\n")
   cat("        jstat=\\$(sacct -j \"\\$jid\" -u mrajeev | head -n 3)\n")
   cat("        echo \"Here's the job stat: \\$jstat\"\n")
-  cat(paste("        sleep ", wait, " # time to sleep for (base it on how long the job should take)\n", sep = ""))
+  cat(paste("        sleep ", wait, " # time to sleep for (base it on how long the job should take)\n"))
   cat("    done\n")
   cat("    if grep -q \"FAILED\\CANCELLED\" <<< \\$jstat\n")
   cat("    then\n        echo \"Failed or cancelled\"\n")
   cat("        exit\n")
   cat("    else\n        logout\n    fi\nHERE\n")
   cat("        sleep 1m    # sleep again as sometimes takes a while to write output\n")
-  cat(paste("        rsync -rLvzt", syncfrom, syncto, "\n", sep = " "))
+  cat(paste("        rsync -rLvzt", syncfrom, syncto, "\n"))
   sink()
   
   # first rsync up
   system2("echo", paste0("Sync script: ", rsync))
-  system2("bash", paste0("bash/", rsync))
+  system2("bash", paste0(rsync))
    
   # bash job.sh (running locally!)
-  system2("bash", args = paste("bash/", jobName, ".sh", sep = ""))
+  system2("bash", args = paste0(dirput, "/", jobName, ".sh"))
 }
 
