@@ -63,6 +63,12 @@ scriptPath <- trimws(toString(args$scriptPath))
 wait <- trimws(toString(args$wait))
 mods <- toString(args$mods)
 
+
+if (!dir.exists(dirput)) {
+  dir.create(dirput, recursive = TRUE)
+}
+
+
 if(is.null(args$syncto)) {
   syncto <- trimws(toString(args$syncto))
 } else {
