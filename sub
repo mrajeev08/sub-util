@@ -23,12 +23,10 @@ parser <- ArgumentParser(prog="sub", description="Utility for submitting jobs (i
 # use sub -h/ --help 
 
 # For gpu
-parser$add_argument("--noGPU", action="store_true", default=TRUE, help="Do not write GPU line, pass -g or --gpu to write the GPU line")
-parser$add_argument("-g", "--gpu", action="store_false", dest="noGPU")
+parser$add_argument("-g", "--gpu", action="store_true", default=FALSE, dest="gpu", help="Pass this to write the line requesting GPU nodes")
 
 # For multiple nodes with MPI vs single node
-parser$add_argument("-mn", "--multinode", action="store_true", default=TRUE, help="Do not write the node line (multinode jobs with rMPI)")
-parser$add_argument("-sn", "--single", action="store_false", dest="multinode", help="Write the node line for running job on single node")
+parser$add_argument("-sn", "--single", action="store_true", dest="single", default = FALSE, help="Pass this for running job on single node. Defaults to using RMPI and multiple nodes.")
 
 parser$add_argument("-t", "--time", type="integer", default=24, help="Number of hours to run",
 dest = "time", metavar = "")
@@ -39,17 +37,19 @@ parser$add_argument("-sp", "--scriptPath", help="Name of R script", dest="script
 parser$add_argument("-jn", "--jobName", help="Name of job/slurm script", dest="jobName", default="myjob", metavar = "")
 
 parser$add_argument("-wt", "--wait", help="time interval to check if job complete", dest = "wait", default="10m", metavar = "")
-parser$add_argument("-@", "--email", action="store_true", help="whether to email or not", default = TRUE)
-parser$add_argument("-n@", "--noemail", action="store_false", dest="email", help="don't email")
+parser$add_argument("-@", "--email", action="store_true", dest="email", default=FALSE, help="Pass this argument if you want an email when the job starts and ends")
 
 # For writing local bash script
 parser$add_argument("-st", "--syncto", help = "Directory to pull TO, if NULL will look in Rscript passed for syncto", default= 'NULL', dest="syncto", metavar = "")
-parser$add_argument("-sf", "--syncfrom", help = "Remote directory to pull FROM, if NULL will look in Rscript passed for syncfrom", default = 'NULL', dest="syncfrom",metavar = "")
+parser$add_argument("-sf", "--syncfrom", help = "Remote directory to pull FROM, if NULL will look in Rscript passed for syncfrom", default = 'NULL', dest="syncfrom", metavar = "")
 
-parser$add_argument("--runsync", action="store_true", default=TRUE, help="Rsyncs up, submits the job, and then pulls down results. To only pull down results pass -no or --norun and the script path (see -sp argument)")
-parser$add_argument("-no", "--norun", action="store_false", dest="runsync")
+parser$add_argument("--pulldown", action="store_true", default=FALSE, help="Pass this arg if you just want to pull down the results from the script either using the syncfrom/to tags in the scripts on the cmd line args (see -sf and -st")
 
 parser$add_argument("-md", "--modules", help = "Other modules to load in slurm script, should be passed as string of module names separated by a space and in quotes", dest = "mods", default = "", metavar = "")
+
+parser$add_argument("--dry", help = "If you just want to create the shell scripts/see what commands will be run without running them pass this.", action = "store_true", default = FALSE)
+
+parser$add_argument("--heavy", help = "To minimize node fracturing (i.e. if you have a job that requires more than 4 GB per core). Uses up to 12 cores per node so that even smallest nodes on della are available.", action = "store_true", default = FALSE)
 
 # get command line options, if help option encountered print help and exit,
 # otherwise if options not found on command line then set defaults,
@@ -62,7 +62,6 @@ jobName <- noquote(trimws(toString(args$jobName)))
 scriptPath <- trimws(toString(args$scriptPath))
 wait <- trimws(toString(args$wait))
 mods <- toString(args$mods)
-
 
 if (!dir.exists(dirput)) {
   dir.create(dirput, recursive = TRUE)
@@ -86,39 +85,66 @@ if(is.null(args$syncfrom)) {
   syncfrom <- unlist(strsplit(syncfrom, "\""))[2]
   print(paste("will pull from: ", syncfrom))
 }
-  
-if( !args$runsync ) {
-  system2("rsync", paste("-rLvzt", syncfrom, syncto))
+
+if ( args$heavy) {
+  if ( args$single )  {
+    print("Warning: can't optimize number of cores over a single node!")
+  } else {
+    opt_nodes <- ceiling(as.numeric(ntasks)/12)
+    opt_ntasks <- ceiling(as.numeric(ntasks)/opt_nodes)
+    print(paste("Optimizing over nodes to ask for", opt_ntasks, "cores per", opt_nodes, "nodes for a total of", opt_ntasks*opt_nodes, "(note that this may result in some unused compute time so check this allocation with the job specs!)"))
+  }
+} 
+
+
+if(args$pulldown) {
+  if(!args$dry) {
+    system2("rsync", paste("-rLvzt", syncfrom, syncto))
+  } else {
+    system2("echo", "dryrun: ")
+    system2("echo", paste("rsync -rLvzt", syncfrom, syncto))
+  }
 } else {
   # parse from Rscript
   sink(paste0(dirput, "/", jobName, ".slurm"))
   cat("#!/bin/bash\n")
-  cat(paste("#SBATCH --job-name=", jobName,"	 # create a short name for your job\n", sep=""))
+  cat(paste0("#SBATCH --job-name=", jobName,"	 # create a short name for your job\n"))
   
-  if ( !args$multinode ) { cat("#SBATCH --nodes=1		      # node count\n") }
-  cat(paste("#SBATCH --ntasks=", ntasks, "	        # total number of tasks across all nodes\n", sep=""))
+  if ( args$single ) { cat("#SBATCH --nodes=1		      # node count\n") }
+  
+  if ( args$heavy & !args$single ) { 
+    cat(paste0("#SBATCH --nodes=", opt_nodes, "	      # node count\n")) 
+    cat(paste0("#SBATCH --ntasks-per-node=", opt_ntasks, "       # total number of tasks per node\n"))
+  }
+  
+  if( !args$heavy & !args$single) {
+    cat(paste0("#SBATCH --ntasks=", ntasks, "	        # total number of tasks across all nodes\n"))
+  }
+  
   cat("#SBATCH --cpus-per-task=1	 # cpu-cores per task (>1 if multithread tasks)\n")
-  cat(paste("#SBATCH --mem-per-cpu=", memCPU, "	 # mem per CPU\n", sep=""))
-  if ( !args$noGPU ) { cat("#SBATCH --gpus=gres:1            # number of gpus per node\n") }
-  cat(paste("#SBATCH --time=", hours, ":00:00          # total run time limit (HH:MM:SS)\n", sep=""))
+  cat(paste0("#SBATCH --mem-per-cpu=", memCPU, "	 # mem per CPU\n"))
+
+  if ( args$gpu ) { cat("#SBATCH --gpus=gres:1            # number of gpus per node\n") }
+  
+  cat(paste0("#SBATCH --time=", hours, ":00:00          # total run time limit (HH:MM:SS)\n"))
   
   if ( args$email ) { 
-  cat("#SBATCH --mail-type=begin        # send mail when process begins\n")
-  cat("#SBATCH --mail-type=end	        # send email when job ends\n")
-  cat(paste("#SBATCH --mail-user=", to_email, "         # email\n", sep=""))
+    cat("#SBATCH --mail-type=begin        # send mail when process begins\n")
+    cat("#SBATCH --mail-type=end	        # send email when job ends\n")
+    cat(paste0("#SBATCH --mail-user=", to_email, "         # email\n"))
   }
   cat("\n")
   
   if(args$mods != "") {
-      cat(paste("module load", mods, "\n"))
+    cat(paste("module load", mods, "\n"))
   }
   
-  if ( args$multinode ) {
-      cat("export OMPI_MCA_btl='tcp,self,sm'\n")
-      cat("module load openmpi/gcc/2.0.2\n")
-      cat(paste0("srun Rscript ", scriptPath, "\n"))
+  if ( !args$single ) {
+    cat("export OMPI_MCA_btl='tcp,self,sm'\n")
+    cat("module load openmpi/gcc/2.0.2\n")
+    cat(paste0("srun Rscript ", scriptPath, "\n"))
   } else {
-      cat(paste0("Rscript ", scriptPath, "\n"))
+    cat(paste0("Rscript ", scriptPath, "\n"))
   }
   sink()
   
@@ -145,11 +171,18 @@ if( !args$runsync ) {
   cat(paste("        rsync -rLvzt", syncfrom, syncto, "\n"))
   sink()
   
-  # first rsync up
-  system2("echo", paste0("Sync script: ", rsync))
-  system2("bash", paste0(rsync))
+  if(args$dry) {
+    system2("echo", "dryrun: ")
+    system2("echo", paste0("bash ", rsync))
+    system2("echo", paste0("bash ", dirput, "/", jobName, ".sh"))
+  } else {
+    # first rsync up
+    system2("echo", paste0("Sync script: ", rsync))
+    system2("bash", paste0(rsync))
    
-  # bash job.sh (running locally!)
-  system2("bash", args = paste0(dirput, "/", jobName, ".sh"))
+    # bash job.sh (running locally!)
+    system2("bash", args = paste0(dirput, "/", jobName, ".sh"))
+  }
+  
 }
 

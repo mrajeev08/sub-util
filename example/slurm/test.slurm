@@ -1,12 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=test	 # create a short name for your job
-#SBATCH --nodes=1		      # node count
-#SBATCH --ntasks=1	        # total number of tasks across all nodes
-#SBATCH --cpus-per-task=1	 # cpu-cores per task (>1 if multithread tasks)
-#SBATCH --mem-per-cpu=4000	 # mem per CPU
+#SBATCH --nodes=3	      # node count
+#SBATCH --ntasks-per-node=11       # total number of tasks per node
 #SBATCH --time=1:00:00          # total run time limit (HH:MM:SS)
-#SBATCH --mail-type=begin        # send mail when process begins
-#SBATCH --mail-type=end	        # send email when job ends
-#SBATCH --mail-user=mrajeev@princeton.edu         # email
 
-Rscript example/test.R
+export OMPI_MCA_btl='tcp,self,sm'
+module load openmpi/gcc/2.0.2
+srun Rscript example/test.R
