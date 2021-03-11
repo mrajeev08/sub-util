@@ -40,7 +40,7 @@ optional arguments:
                        Rscript passed for syncfrom
   --pulldown           Pass this arg if you just want to pull down the results
                        from the script either using the syncfrom/to tags in
-                       the scripts on the cmd line args (see -sf and -st
+                       the script or the cmd line args (see -sf and -st)
   -md , --modules      Other modules to load in slurm script, should be passed
                        as string of module names separated by a space and in
                        quotes
@@ -50,6 +50,10 @@ optional arguments:
                        that requires more than 4 GB per core). Uses up to 12
                        cores per node so that even smallest nodes on della are
                        available.
+  -ar , --array        Pass an array to an array job (a string in quotes),
+                       i.e. -ar '0-2'
+  -cmd , --cmdargs     Pass command line arguments to pass to the script (a
+                       string in quotes), i.e. -cmd '10 TRUE'
 ```
 
 ## Setting-up
