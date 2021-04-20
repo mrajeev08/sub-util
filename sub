@@ -318,7 +318,7 @@ if (args$pulldown) {
   cat(paste("    cd ", dir, " # change to repo\n"))
   
   if(args$arr != "") {
-    max_arr <- unlist(strsplit(args$arr, "-"))[2]
+    max_arr <-  gsub("[^0-9]", "", unlist(strsplit(args$arr, "-"))[2])
     cat(paste0("    sid=\\$(sbatch ", dirput, "/", jobName, ".slurm | cut -c 21-)\n"))
     cat(paste0("    arid=", max_arr, "\n"))
     cat(paste0('    jid=\\$(echo \"\\${sid}_\\${arid}")\n'))

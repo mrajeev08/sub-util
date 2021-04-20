@@ -9,17 +9,17 @@ down the results when it’s finished.
 For help and usage info, enter `sub -h` on the command line:
 ```
 usage: sub [-h] [-g] [-sn] [-t] [-n] [-mem] [-sp] [-jn] [-wt] [-@] [-st] [-sf]
-           [--pulldown] [-md] [--dry] [--heavy]
+           [--pulldown] [-md] [--dry] [--heavy] [-ar] [-cmd]
 
 Utility for submitting jobs (in this case an R script) to remote cluster. This
 uses an rsync to sync from the local directory to the remote directory. You
 will need to create an Rsync script with 'subrsync' in it's name that has
-three commented lines of the format: ## user:={username} (specifies username);
-## cluster:={cluster} (specifies cluster); and ## dirput:={dir} (specifies
-where to put all your shell & slurm scripts). In each Rscript you want to run,
-you can either pass the directories you want to sync from (syncfrom) from and
-sync to (syncto) as command line arguments or you can include them in the
-script itself. An example is included in this directory.
+three commented lines of the format: '## user:={username}' (specifies
+username); '## cluster:={cluster}' (specifies cluster); and '## dirput:={dir}'
+(specifies where to put all your shell & slurm scripts). In each Rscript you
+want to run, you can either pass the directories you want to sync from
+(syncfrom) from and sync to (syncto) as command line arguments or you can
+include them in the script itself. An example is included in this directory.
 
 optional arguments:
   -h, --help           show this help message and exit
@@ -100,6 +100,4 @@ Dependencies:
 - [argparser](https://github.com/trevorld/r-argparse) package which requires python 
 
 ## To Do
-- [ ] Longer jobs?
-- [ ] Array jobs?
 - [ ] Switch to [docopt](https://github.com/docopt/docopt.R) for fewer dependencies & cleaner code?
